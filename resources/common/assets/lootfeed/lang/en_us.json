@@ -1,0 +1,17 @@
+{
+  "key.lootfeed.toggle": "Loot Feed: Show/Hide",
+  "key.lootfeed.filter": "Loot Feed: Switch Filter",
+  "key.lootfeed.history": "Loot Feed: Hold for History",
+  "lootfeed.tag.new": "NEW",
+  "lootfeed.tag.lost": "LOST",
+  "lootfeed.discovery": "First loot from a new structure",
+  "lootfeed.history": "Last %s min",
+  "lootfeed.empty": "Nothing yet",
+  "lootfeed.filter.all": "Filter: everything",
+  "lootfeed.filter.new": "Filter: only new",
+  "lootfeed.filter.rare": "Filter: only rare",
+  "lootfeed.state.on": "Loot Feed on",
+  "lootfeed.state.off": "Loot Feed off",
+  "lootfeed.time.seconds": "%ss",
+  "lootfeed.time.minutes": "%sm"
+}

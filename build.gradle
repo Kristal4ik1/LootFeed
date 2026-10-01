@@ -1,0 +1,100 @@
+plugins {
+    id 'dev.architectury.loom' version '1.17.493' apply false
+}
+
+def targets = subprojects.findAll { it.parent != rootProject }
+
+configure(targets) {
+    def loader = name
+    def minecraftVersion = property('minecraft_version')
+    def javaVersion = property('java_version') as int
+    def obfuscated = minecraftVersion.startsWith('1.')
+
+    apply plugin: obfuscated ? 'dev.architectury.loom' : 'dev.architectury.loom-no-remap'
+
+    group = 'dev.lootfeed'
+    version = "${mod_version}+${minecraftVersion}"
+
+    base {
+        archivesName = "${mod_id}-${loader}"
+    }
+
+    repositories {
+        maven { url = 'https://maven.neoforged.net/releases/' }
+    }
+
+    loom {
+        silentMojangMappingsLicense()
+        if (loader == 'forge') {
+            forge {
+                mixinConfig "${mod_id}.mixins.json"
+            }
+        }
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${minecraftVersion}"
+        if (obfuscated) {
+            mappings loom.officialMojangMappings()
+        }
+        if (loader == 'fabric') {
+            add obfuscated ? 'modImplementation' : 'implementation', "net.fabricmc:fabric-loader:${property('loader_version')}"
+            add(obfuscated ? 'modLocalRuntime' : 'localRuntime', fabricApi.module('fabric-resource-loader-v0', property('fabric_api'))) {
+                exclude group: 'net.fabricmc', module: 'fabric-loader'
+            }
+        } else if (loader == 'forge') {
+            forge "net.minecraftforge:forge:${minecraftVersion}-${property('loader_version')}"
+        } else {
+            neoForge "net.neoforged:neoforge:${property('loader_version')}"
+        }
+    }
+
+    sourceSets.main {
+        java.srcDirs = [rootProject.file('core/src/main/java'), rootProject.file("loaders/${findProperty('entrypoint') ?: loader}/src/main/java")]
+        java.srcDirs += property('adapters').tokenize(',').collect { rootProject.file("adapters/${it}/src/main/java") }
+        resources.srcDirs = [
+                rootProject.file('resources/common'),
+                rootProject.file("resources/${loader}")
+        ]
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = javaVersion
+        options.compilerArgs << '-Xlint:-options'
+    }
+
+    def values = [
+            mod_id         : mod_id,
+            mod_name       : mod_name,
+            mod_version    : mod_version,
+            mod_license    : mod_license,
+            mod_authors    : mod_authors,
+            mod_description: mod_description,
+            minecraft_range: property('minecraft_range'),
+            loader_range   : property('loader_range'),
+            pack_format    : findProperty('pack_format') ?: '',
+            mixin_compat   : findProperty('mixin_compat') ?: "JAVA_${javaVersion}"
+    ]
+    def legacyToml = findProperty('legacy_toml') == 'true'
+
+    processResources {
+        inputs.properties values
+        filesMatching(['fabric.mod.json', 'pack.mcmeta', '*.mixins.json', 'META-INF/*.toml']) {
+            expand values
+        }
+        if (legacyToml) {
+            rename 'neoforge.mods.toml', 'mods.toml'
+        }
+        if (!values.pack_format) {
+            exclude 'pack.mcmeta'
+        }
+    }
+
+    tasks.register('collect', Copy) {
+        from obfuscated ? remapJar : jar
+        into rootProject.layout.buildDirectory.dir("libs/${minecraftVersion}")
+    }
+
+    build.finalizedBy collect
+}

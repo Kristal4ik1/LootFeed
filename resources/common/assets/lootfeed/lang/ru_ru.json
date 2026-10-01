@@ -1,0 +1,17 @@
+{
+  "key.lootfeed.toggle": "Loot Feed: показать/скрыть",
+  "key.lootfeed.filter": "Loot Feed: сменить фильтр",
+  "key.lootfeed.history": "Loot Feed: история (удерживать)",
+  "lootfeed.tag.new": "НОВОЕ",
+  "lootfeed.tag.lost": "ПОТЕРЯНО",
+  "lootfeed.discovery": "Первый лут из новой структуры",
+  "lootfeed.history": "Последние %s мин",
+  "lootfeed.empty": "Пока пусто",
+  "lootfeed.filter.all": "Фильтр: всё подряд",
+  "lootfeed.filter.new": "Фильтр: только новое",
+  "lootfeed.filter.rare": "Фильтр: только редкое",
+  "lootfeed.state.on": "Loot Feed включён",
+  "lootfeed.state.off": "Loot Feed выключен",
+  "lootfeed.time.seconds": "%sс",
+  "lootfeed.time.minutes": "%sм"
+}
