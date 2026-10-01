@@ -1,0 +1,89 @@
+import groovy.json.JsonSlurper
+
+plugins {
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+def shared = new Properties()
+file('../../gradle.properties').withInputStream { shared.load(it) }
+
+group = 'dev.lootfeed'
+version = "${shared.mod_version}+${minecraft_version}"
+
+base {
+    archivesName = "${shared.mod_id}-forge"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(8)
+}
+
+minecraft {
+    mappings channel: 'stable', version: mappings_version
+
+    runs {
+        client {
+            workingDirectory file('run')
+            mods {
+                lootfeed {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+}
+
+sourceSets.main {
+    java.srcDir '../../core/src/main/java'
+}
+
+def translations = fileTree('../../resources/common/assets/lootfeed/lang') { include '*.json' }
+
+def legacyLang = tasks.register('legacyLang') {
+    def output = layout.buildDirectory.dir('generated/lang')
+    inputs.files translations
+    outputs.dir output
+    doLast {
+        translations.each { source ->
+            def entries = new JsonSlurper().parse(source, 'UTF-8')
+            def target = new File(output.get().asFile, "assets/lootfeed/lang/${source.name - '.json'}.lang")
+            target.parentFile.mkdirs()
+            target.setText(entries.collect { key, value -> "${key}=${value}" }.join('\n') + '\n', 'UTF-8')
+        }
+    }
+}
+
+processResources {
+    def values = [
+            mod_id         : shared.mod_id,
+            mod_name       : shared.mod_name,
+            mod_version    : shared.mod_version,
+            mod_authors    : shared.mod_authors,
+            mod_description: shared.mod_description,
+            minecraft      : minecraft_version
+    ]
+    inputs.properties values
+    from legacyLang
+    from('../../resources/common') { include 'icon.png' }
+    filesMatching('mcmod.info') {
+        expand values
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+jar.finalizedBy 'reobfJar'
+
+tasks.register('collect', Copy) {
+    dependsOn 'reobfJar'
+    from jar
+    into "../../build/libs/${minecraft_version}"
+}
+
+build.finalizedBy collect
